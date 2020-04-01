@@ -1,0 +1,8 @@
+# ignore DS
+.DS_Store
+
+# ignore .gitignore
+.gitignore
+
+# ignore .idea/
+.idea/
