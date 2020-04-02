@@ -38,18 +38,25 @@ num_3_val = len(os.listdir(validation_3_dir))
 num_4_val = len(os.listdir(validation_4_dir))
 
 total_train = num_0_tr + num_1_tr + num_2_tr + num_3_tr + num_4_tr
-total_val = num_0_val + num_1_val + num_2_val + num_3_val + num_4_val 
+total_val = num_0_val + num_1_val + num_2_val + num_3_val + num_4_val
 
-#print('total training male images:', num_male_tr)
-#print('total training female images:', num_female_tr)
+print('total training num_0 images:', num_0_tr)
+print('total training num_1 images:', num_1_tr)
+print('total training num_2 images:', num_2_tr)
+print('total training num_3 images:', num_3_tr)
+print('total training num_4 images:', num_4_tr)
 
-#print('total validation male images:', num_male_val)
-#print('total validation female images:', num_female_val)
+print('total validation num_0 images:', num_0_val)
+print('total validation num_1 images:', num_1_val)
+print('total validation num_2 images:', num_2_val)
+print('total validation num_3 images:', num_3_val)
+print('total validation num_4 images:', num_4_val)
+
 print("--")
 print("Total training images:", total_train)
 print("Total validation images:", total_val)
 
-batch_size = 64
+batch_size = 1
 epochs = 20
 IMG_HEIGHT = 100
 IMG_WIDTH = 100
