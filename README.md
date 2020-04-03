@@ -1,6 +1,6 @@
 # Diabetic Retinopathy Classifier
 
-This repository is aim to classify fundus images into 5 category of diabetic retinopathy
+This repository aims to classify fundus images into 5 categories of diabetic retinopathy
 
 # Dataset
 Dataset is downloaded from kaggle. The link is [here](https://www.kaggle.com/c/aptos2019-blindness-detection).
@@ -49,7 +49,7 @@ With Transfer learning VGG19
 `python3 train.py -e 3 -opt adam -l binary_crossentropy -act relu -t vgg19` 
 
 
-# Todo
+# To-do
 - add readme ✅
 - implement transfer learning ✅
 - implement hyperparameter tuning ✅
