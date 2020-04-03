@@ -5,8 +5,26 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 import os
 import pickle
-import numpy as np
+import argparse
 import matplotlib.pyplot as plt
+
+from tensorflow.keras.applications import VGG16, VGG19
+from tensorflow.keras.applications import ResNet50
+
+ap = argparse.ArgumentParser()
+ap.add_argument('-e', '--epoch', required=True,
+                help = 'training epoch')
+ap.add_argument('-b', '--batch_size', default=1,
+                help = 'training batch size')
+ap.add_argument('-opt', '--optimizer', required=True,
+                help = 'optimizer for compile model option: sgd, adam, rmsprop, adagrad')
+ap.add_argument('-t', '--transfer', default=False,
+                help = 'transfer learning pretrain model, option: vgg16, vgg19, resnet50')
+ap.add_argument('-l', '--loss', required=True,
+                help = 'training loss to compile option: categorical_crossentropy, binary_crossentropy')
+ap.add_argument('-act', '--activation', required=True,
+                help = 'training loss to compile, option: tanh, relu, sigmoid')
+args = ap.parse_args()
 
 PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
@@ -56,8 +74,8 @@ print("--")
 print("Total training images:", total_train)
 print("Total validation images:", total_val)
 
-batch_size = 1
-epochs = 20
+batch_size = int(args.batch_size)
+epochs = int(args.epoch)
 IMG_HEIGHT = 100
 IMG_WIDTH = 100
 
@@ -102,31 +120,78 @@ def plotImages(images_arr):
 model = None
 history = None
 
-#if os.path.exists('tes.h5') and os.path.exists('history'):
-#    model = load_model('tes.h5')
-#    with open('history', 'rb') as f:
-#        history = pickle.load(f)
-    
-#else:
-model = Sequential([
-    Conv2D(64, 3, padding='same', activation='relu', 
-            input_shape=(IMG_HEIGHT, IMG_WIDTH ,3)),
-    MaxPooling2D(),
-    #Dropout(0.2),
-    Conv2D(32, 3, padding='same', activation='relu'),
-    Conv2D(32, 3, padding='same', activation='relu'),
-    MaxPooling2D(),
-    Conv2D(16, 3, padding='same', activation='relu'),
-    Conv2D(16, 3, padding='same', activation='relu'),
-    MaxPooling2D(),
-    #Dropout(0.2),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dense(5, activation='softmax')
-])
+if args.transfer == 'vgg16':
+    conv_base = VGG16(weights='imagenet',
+                         include_top=False,
+                         input_shape=(IMG_HEIGHT, IMG_WIDTH, 3))
 
-model.compile(optimizer='adam',
-              loss='binary_crossentropy',
+    # for layer in conv_base.layers[-2]:
+    #    layer.trainable=False
+
+    conv_base.trainable = False
+    model = Sequential([
+        conv_base,
+        Flatten(),
+        Dense(128, activation=args.activation),
+        Dense(5, activation='softmax')
+    ])
+    print('[INFO] Transfer learning using VGG16')
+
+elif args.transfer == 'vgg19':
+    conv_base = VGG19(weights='imagenet',
+                         include_top=False,
+                         input_shape=(IMG_HEIGHT, IMG_WIDTH, 3))
+
+    # for layer in conv_base.layers[-2]:
+    #    layer.trainable=False
+
+    conv_base.trainable = False
+    model = Sequential([
+        conv_base,
+        Flatten(),
+        Dense(128, activation=args.activation),
+        Dense(5, activation='softmax')
+    ])
+    print('[INFO] Transfer learning using VGG19')
+
+elif args.transfer == 'resnet50':
+    conv_base = ResNet50(weights='imagenet',
+                         include_top=False,
+                         input_shape=(IMG_HEIGHT, IMG_WIDTH, 3))
+
+    # for layer in conv_base.layers[-2]:
+    #    layer.trainable=False
+
+    conv_base.trainable = False
+    model = Sequential([
+        conv_base,
+        Flatten(),
+        Dense(128, activation=args.activation),
+        Dense(5, activation='softmax')
+    ])
+    print('[INFO] Transfer learning using ResNet50')
+
+else:
+    model = Sequential([
+        Conv2D(64, 3, padding='same', activation=args.activation,
+                input_shape=(IMG_HEIGHT, IMG_WIDTH ,3)),
+        MaxPooling2D(),
+        #Dropout(0.2),
+        Conv2D(32, 3, padding='same', activation=args.activation),
+        Conv2D(32, 3, padding='same', activation=args.activation),
+        MaxPooling2D(),
+        Conv2D(16, 3, padding='same', activation=args.activation),
+        Conv2D(16, 3, padding='same', activation=args.activation),
+        MaxPooling2D(),
+        #Dropout(0.2),
+        Flatten(),
+        Dense(128, activation='relu'),
+        Dense(5, activation='softmax')
+        ])
+
+        print('[INFO] Using simple architecture')
+model.compile(optimizer=args.optimizer,
+              loss=args.loss,
               metrics=["acc"])
               
 model.summary()
@@ -208,4 +273,4 @@ frozen_graph = freeze_session(tf.compat.v1.keras.backend.get_session(),
 tf.io.write_graph(frozen_graph, "model", "tf_model.pb", as_text=False)
 
 
-plt.show()
+plt.savefig('train_val.png')
