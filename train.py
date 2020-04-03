@@ -189,7 +189,7 @@ else:
         Dense(5, activation='softmax')
         ])
 
-        print('[INFO] Using simple architecture')
+    print('[INFO] Using simple architecture')
 model.compile(optimizer=args.optimizer,
               loss=args.loss,
               metrics=["acc"])
