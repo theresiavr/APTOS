@@ -36,7 +36,7 @@ optional arguments:
   -l LOSS, --loss LOSS  training loss to compile option:
                         categorical_crossentropy, binary_crossentropy
   -act ACTIVATION, --activation ACTIVATION
-                        training loss to compile, option: tanh, relu, sigmoid
+                        training activation function to compile, option: tanh, relu, sigmoid
 
 ```
 ## Example
