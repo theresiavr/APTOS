@@ -23,7 +23,7 @@ ap.add_argument('-t', '--transfer', default=False,
 ap.add_argument('-l', '--loss', required=True,
                 help = 'training loss to compile option: categorical_crossentropy, binary_crossentropy')
 ap.add_argument('-act', '--activation', required=True,
-                help = 'training loss to compile, option: tanh, relu, sigmoid')
+                help = 'training activation function to compile, option: tanh, relu, sigmoid')
 args = ap.parse_args()
 
 PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
