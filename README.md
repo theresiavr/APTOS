@@ -5,7 +5,7 @@ This repository aims to classify retina images taken using fundus photography in
 # Dataset
 Dataset is downloaded from kaggle. The link is [here](https://www.kaggle.com/c/aptos2019-blindness-detection).
 It contains 3662 train data and 1928 test data.
-However, due to the huge size of the original dataset, we only used the training data as our whole dataset. We further split the 3662 images into train and test data.
+However, due to the huge size of the original dataset, we only used the training data as our whole dataset. We further split the 3662 images into train and validation data.
 
 <table>
 <tr>
