@@ -1,4 +1,3 @@
-from tensorflow.keras import metrics
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Conv2D, Flatten, Dropout, MaxPooling2D
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
@@ -74,12 +73,12 @@ print("--")
 print("Total training images:", total_train)
 print("Total validation images:", total_val)
 
-batch_size = int(args.batch_size)
-epochs = int(args.epoch)
+BATCH_SIZE = int(args.batch_size)
+EPOCHS = int(args.epoch)
 IMG_HEIGHT = 100
 IMG_WIDTH = 100
 
-
+# Build train data generator
 train_image_generator = ImageDataGenerator(
                     rescale=1./255,
                     rotation_range=5,
@@ -87,47 +86,34 @@ train_image_generator = ImageDataGenerator(
                     zoom_range=0.1,
                     brightness_range=[0.3,1.0]
                     )
-                    
-validation_image_generator = ImageDataGenerator(rescale=1./255) # Generator for our validation data
-                    
-train_data_gen = train_image_generator.flow_from_directory(batch_size=batch_size,
+
+# Build validation data generator
+validation_image_generator = ImageDataGenerator(rescale=1./255)
+
+
+train_data_gen = train_image_generator.flow_from_directory(batch_size=BATCH_SIZE,
                                                      directory=train_dir,
                                                      shuffle=True,
                                                      target_size=(IMG_HEIGHT, IMG_WIDTH),
                                                      class_mode='categorical',
                                                      classes=['0', '1', '2', '3',' 4'])
                                                
-val_data_gen = validation_image_generator.flow_from_directory(batch_size=batch_size,
+val_data_gen = validation_image_generator.flow_from_directory(batch_size=BATCH_SIZE,
                                                               directory=validation_dir,
                                                               target_size=(IMG_HEIGHT, IMG_WIDTH),
                                                               class_mode='categorical',
                                                               classes=['0', '1', '2', '3',' 4'])
-                                                              
-sample_training_images, _ = next(train_data_gen)
-
-# This function will plot images in the form of a grid with 1 row and 5 columns where images are placed in each column.
-def plotImages(images_arr):
-    fig, axes = plt.subplots(1, 5, figsize=(20,20))
-    axes = axes.flatten()
-    for img, ax in zip( images_arr, axes):
-        ax.imshow(img)
-        ax.axis('off')
-    plt.tight_layout()
-    plt.show()
-    
-#plotImages(sample_training_images[:5])
 
 model = None
 history = None
 
+# Transfer learning with VGG16
 if args.transfer == 'vgg16':
     conv_base = VGG16(weights='imagenet',
                          include_top=False,
                          input_shape=(IMG_HEIGHT, IMG_WIDTH, 3))
 
-    # for layer in conv_base.layers[-2]:
-    #    layer.trainable=False
-
+    # Freeze pretrain model
     conv_base.trainable = False
     model = Sequential([
         conv_base,
@@ -142,9 +128,7 @@ elif args.transfer == 'vgg19':
                          include_top=False,
                          input_shape=(IMG_HEIGHT, IMG_WIDTH, 3))
 
-    # for layer in conv_base.layers[-2]:
-    #    layer.trainable=False
-
+    # Freeze pretrain model
     conv_base.trainable = False
     model = Sequential([
         conv_base,
@@ -159,9 +143,7 @@ elif args.transfer == 'resnet50':
                          include_top=False,
                          input_shape=(IMG_HEIGHT, IMG_WIDTH, 3))
 
-    # for layer in conv_base.layers[-2]:
-    #    layer.trainable=False
-
+    # Freeze pretrain model
     conv_base.trainable = False
     model = Sequential([
         conv_base,
@@ -176,38 +158,40 @@ else:
         Conv2D(64, 3, padding='same', activation=args.activation,
                 input_shape=(IMG_HEIGHT, IMG_WIDTH ,3)),
         MaxPooling2D(),
-        #Dropout(0.2),
         Conv2D(32, 3, padding='same', activation=args.activation),
         Conv2D(32, 3, padding='same', activation=args.activation),
         MaxPooling2D(),
         Conv2D(16, 3, padding='same', activation=args.activation),
         Conv2D(16, 3, padding='same', activation=args.activation),
         MaxPooling2D(),
-        #Dropout(0.2),
         Flatten(),
         Dense(128, activation='relu'),
         Dense(5, activation='softmax')
         ])
-
     print('[INFO] Using simple architecture')
+
 model.compile(optimizer=args.optimizer,
               loss=args.loss,
               metrics=["acc"])
-              
+
+# print model architecture
 model.summary()
 
+# Train model
 history = model.fit_generator(
     train_data_gen,
-    steps_per_epoch=total_train // batch_size,
-    epochs=epochs,
+    steps_per_epoch=total_train // BATCH_SIZE,
+    epochs=EPOCHS,
     validation_data=val_data_gen,
-    validation_steps=total_val // batch_size
+    validation_steps=total_val // BATCH_SIZE
 )
 history = history.history
 
+# Save model history
 with open('history_aptos', 'wb') as f:
     pickle.dump(history, f)
 
+# Save model weights
 model.save('aptos.h5')
 
 acc = history['acc']
@@ -216,11 +200,9 @@ val_acc = history['val_acc']
 loss = history['loss']
 val_loss = history['val_loss']
 
-epochs_range = range(epochs)
+epochs_range = range(EPOCHS)
 
-print(model.inputs)
-print(model.outputs)
-
+# plot model accuracy and loss
 plt.figure(figsize=(8, 8))
 plt.subplot(1, 2, 1)
 plt.plot(epochs_range, acc, label='Training Accuracy')
@@ -234,43 +216,5 @@ plt.plot(epochs_range, val_loss, label='Validation Loss')
 plt.legend(loc='upper right')
 plt.title('Training and Validation Loss')
 
-import tensorflow as tf
-
-def freeze_session(session, keep_var_names=None, output_names=None, clear_devices=True):
-    """
-    Freezes the state of a session into a pruned computation graph.
-
-    Creates a new computation graph where variable nodes are replaced by
-    constants taking their current value in the session. The new graph will be
-    pruned so subgraphs that are not necessary to compute the requested
-    outputs are removed.
-    @param session The TensorFlow session to be frozen.
-    @param keep_var_names A list of variable names that should not be frozen,
-                          or None to freeze all the variables in the graph.
-    @param output_names Names of the relevant graph outputs.
-    @param clear_devices Remove the device directives from the graph for better portability.
-    @return The frozen graph definition.
-    """
-    from tensorflow.python.framework.graph_util import convert_variables_to_constants
-    graph = session.graph
-    with graph.as_default():
-        freeze_var_names = list(set(v.op.name for v in tf.compat.v1.global_variables()).difference(keep_var_names or []))
-        output_names = output_names or []
-        output_names += [v.op.name for v in tf.compat.v1.global_variables()]
-        # Graph -> GraphDef ProtoBuf
-        input_graph_def = graph.as_graph_def()
-        if clear_devices:
-            for node in input_graph_def.node:
-                node.device = ""
-        frozen_graph = tf.compat.v1.graph_util.convert_variables_to_constants(session, input_graph_def,
-                                                      output_names, freeze_var_names)
-        return frozen_graph
-
-
-frozen_graph = freeze_session(tf.compat.v1.keras.backend.get_session(),
-                              output_names=[out.op.name for out in model.outputs])
-
-tf.io.write_graph(frozen_graph, "model", "tf_model.pb", as_text=False)
-
-
+# Save plot
 plt.savefig('train_val.png')
